@@ -408,129 +408,71 @@ ala_hotel_service.limpiar(ala_hotel)
 # - Siempre: 90 min
 ```
 
-**Crecimiento**:
+**Actualizacion de estado**:
 ```python
-# Pino: +0.10m por riego
-# Olivo: +0.01m por riego
+# Después del mantenimiento, estado cambia a "Lista"
+habitacion.set_estado("Lista")
 ```
 
-**Trazabilidad**: `plantacion_service.py` lineas 82-129
+**Trazabilidad**: `hotel_service.py` lineas 82-129 # puede que esta linea este mal
 
 ---
 
-### US-009: Mostrar Datos de Cultivos por Tipo
+### US-009: Mostrar Datos de Habitaciones por Tipo
 
-**Como** administrador de finca
-**Quiero** ver los datos de cada cultivo de forma especifica
-**Para** conocer el estado actual de mis plantaciones
+**Como** administrador de hotel
+**Quiero** ver los datos de cada habitación de forma específica
+**Para** conocer el estado actual de mi hotel
 
 #### Criterios de Aceptacion
 
-- [x] El sistema debe mostrar datos especificos por tipo:
-  - **Pino**: Cultivo, Superficie, Agua, ID, Altura, Variedad
-  - **Olivo**: Cultivo, Superficie, Agua, ID, Altura, Tipo de aceituna
-  - **Lechuga**: Cultivo, Superficie, Agua, Variedad, Invernadero
-  - **Zanahoria**: Cultivo, Superficie, Agua, Es baby carrot
+- [x]El sistema debe mostrar datos específicos por tipo:
+  - **Simple**:  Habitación, Capacidad, Tarifa, ID, Estado
+  - **Doble**: Habitación, Capacidad, Tarifa, Servicios incluidos
+  - **Suite**: Habitación, Capacidad, Tarifa, Amenities
+  - **Presidencial**:  Habitación, Capacidad, Tarifa, Con terraza
 - [x] Usar el patron Registry para dispatch polimorfico
 - [x] NO usar cascadas de isinstance()
 
 #### Detalles Tecnicos
 
-**Registry**: `CultivoServiceRegistry.mostrar_datos()`
+**Registry**: `HabitacionServiceRegistry.mostrar_datos()`
 
 **Codigo de ejemplo**:
 ```python
-from python_forestacion.servicios.cultivos.cultivo_service_registry import CultivoServiceRegistry
+from python_hotel.servicios.habitaciones.habitacion_service_registry import HabitacionServiceRegistry
 
-registry = CultivoServiceRegistry.get_instance()
+registry = HabitacionServiceRegistry.get_instance()
 
-for cultivo in plantacion.get_cultivos():
-    registry.mostrar_datos(cultivo)
-    # Despacho automatico al servicio correcto
+for habitacion in ala_hotel.get_habitaciones():
+    registry.mostrar_datos(habitacion)
+    # Despacho automático al servicio correcto
 ```
 
 **Salida ejemplo (Pino)**:
 ```
-Cultivo: Pino
-Superficie: 2.0 m²
-Agua almacenada: 7 L
+Habitación: Simple
+Capacidad: 1 persona
+Tarifa base: 50.0 USD
 ID: 1
-Altura: 1.2 m
-Variedad: Parana
+Estado: Disponible
 ```
 
-**Trazabilidad**: `cultivo_service_registry.py` lineas 78-89
 
 ---
 
-## Epic 3: Sistema de Riego Automatizado
+## Epic 3:  Sistema de Limpieza Automatizado
 
-### US-010: Monitorear Temperatura en Tiempo Real
+### US-010: Monitorear Ocupación en Tiempo Real
 
-**Como** sistema de riego automatizado
-**Quiero** leer la temperatura ambiental cada 2 segundos
-**Para** tomar decisiones de riego basadas en condiciones reales
-
+**Como**  sistema de limpieza automatizado
+**Quiero** leer la ocupación ambiental cada 2 segundos
+**Para** tomar decisiones de limpieza basadas en condiciones reales
 #### Criterios de Aceptacion
 
 - [x] El sensor debe:
   - Ejecutarse en un thread daemon separado
-  - Leer temperatura cada 2 segundos (configurable)
-  - Generar lecturas aleatorias entre -25C y 50C
-  - Notificar a observadores cada vez que lee
-  - Soportar detencion graceful con timeout
-- [x] Implementar patron Observer (Observable)
-- [x] Usar Generics para tipo-seguridad: `Observable[float]`
-
-#### Detalles Tecnicos
-
-**Clase**: `TemperaturaReaderTask` (`python_forestacion/riego/sensores/temperatura_reader_task.py`)
-**Patron**: Observer (Observable[float])
-
-**Codigo de ejemplo**:
-```python
-from python_forestacion.riego.sensores.temperatura_reader_task import TemperaturaReaderTask
-
-# Crear sensor (thread daemon)
-tarea_temp = TemperaturaReaderTask()
-
-# Iniciar lectura continua
-tarea_temp.start()
-
-# Detener cuando sea necesario
-tarea_temp.detener()
-tarea_temp.join(timeout=2.0)
-```
-
-**Constantes**:
-```python
-INTERVALO_SENSOR_TEMPERATURA = 2.0  # segundos
-SENSOR_TEMP_MIN = -25  # °C
-SENSOR_TEMP_MAX = 50  # °C
-```
-
-**Eventos generados**:
-```python
-# Cada lectura notifica valor float a observadores
-temperatura: float = 22.5
-self.notificar_observadores(temperatura)
-```
-
-**Trazabilidad**: `main.py` lineas 158-166
-
----
-
-### US-011: Monitorear Humedad en Tiempo Real
-
-**Como** sistema de riego automatizado
-**Quiero** leer la humedad ambiental cada 3 segundos
-**Para** complementar datos de temperatura en decisiones de riego
-
-#### Criterios de Aceptacion
-
-- [x] El sensor debe:
-  - Ejecutarse en un thread daemon separado
-  - Leer humedad cada 3 segundos (configurable)
+  - Leer ocupación cada 2 segundos (configurable)
   - Generar lecturas aleatorias entre 0% y 100%
   - Notificar a observadores cada vez que lee
   - Soportar detencion graceful con timeout
@@ -539,107 +481,161 @@ self.notificar_observadores(temperatura)
 
 #### Detalles Tecnicos
 
-**Clase**: `HumedadReaderTask` (`python_forestacion/riego/sensores/humedad_reader_task.py`)
+**Clase**: `OcupacionReaderTask` (`python_hotel/monitoreo/sensores/ocupacion_reader_task.py`)
 **Patron**: Observer (Observable[float])
 
 **Codigo de ejemplo**:
 ```python
-from python_forestacion.riego.sensores.humedad_reader_task import HumedadReaderTask
+from python_hotel.monitoreo.sensores.ocupacion_reader_task import OcupacionReaderTask
 
 # Crear sensor (thread daemon)
-tarea_hum = HumedadReaderTask()
+sensor_ocupacion = OcupacionReaderTask()
 
 # Iniciar lectura continua
-tarea_hum.start()
+sensor_ocupacion.start()
 
 # Detener cuando sea necesario
-tarea_hum.detener()
-tarea_hum.join(timeout=2.0)
+sensor_ocupacion.detener()
+sensor_ocupacion.join(timeout=2.0)
 ```
 
 **Constantes**:
 ```python
-INTERVALO_SENSOR_HUMEDAD = 3.0  # segundos
-SENSOR_HUMEDAD_MIN = 0  # %
-SENSOR_HUMEDAD_MAX = 100  # %
+INTERVALO_SENSOR_OCUPACION = 2.0  # segundos
+SENSOR_OCUPACION_MIN = 0  # %
+SENSOR_OCUPACION_MAX = 100  # %
+```
+
+**Eventos generados**:
+```python
+# Cada lectura notifica valor float a observadores
+ocupacion: float = 45.5
+self.notificar_observadores(ocupacion)
 ```
 
 **Trazabilidad**: `main.py` lineas 158-166
 
 ---
 
-### US-012: Control Automatico de Riego Basado en Sensores
+### US-011:  Monitorear Nivel de Limpieza en Tiempo Real
 
-**Como** sistema de riego automatizado
-**Quiero** regar automaticamente cuando se cumplan condiciones ambientales
-**Para** optimizar el uso de agua segun necesidades reales
+**Como**  sistema de limpieza automatizado
+**Quiero** leer el nivel de limpieza cada 3 segundos
+**Para** complementar datos de ocupación en decisiones de limpieza
+
+#### Criterios de Aceptacion
+
+- [x] El sensor debe:
+  - Ejecutarse en un thread daemon separado
+  - Leer limpieza cada 3 segundos (configurable)
+  - Generar lecturas aleatorias entre 0% y 100%
+  - Notificar a observadores cada vez que lee
+  - Soportar detencion graceful con timeout
+- [x] Implementar patron Observer (Observable)
+- [x] Usar Generics para tipo-seguridad: `Observable[float]`
+
+#### Detalles Tecnicos
+
+**Clase**: `LimpiezaReaderTask` (`python_hotel/monitoreo/sensores/limpieza_reader_task.py`)
+**Patron**: Observer (Observable[float])
+
+**Codigo de ejemplo**:
+```python
+from python_hotel.monitoreo.sensores.limpieza_reader_task import LimpiezaReaderTask
+
+# Crear sensor (thread daemon)
+sensor_limpieza = LimpiezaReaderTask()
+
+# Iniciar lectura continua
+sensor_limpieza.start()
+
+# Detener cuando sea necesario
+sensor_limpieza.detener()
+sensor_limpieza.join(timeout=2.0)
+```
+
+**Constantes**:
+```python
+INTERVALO_SENSOR_LIMPIEZA = 3.0  # segundos
+SENSOR_LIMPIEZA_MIN = 0  # %
+SENSOR_LIMPIEZA_MAX = 100  # %
+```
+
+**Trazabilidad**: `main.py` lineas 158-166
+
+---
+
+### US-012: Control Automático de Limpieza Basado en Sensores
+
+**Como** sistema de limpieza automatizado
+**Quiero** r limpiar automáticamente cuando se cumplan condiciones ambientales
+**Para**  optimizar el uso de recursos según necesidades reales
 
 #### Criterios de Aceptacion
 
 - [x] El controlador debe:
   - Ejecutarse en un thread daemon separado
   - Evaluar condiciones cada 2.5 segundos
-  - Observar sensores de temperatura y humedad
-  - Regar cuando:
-    - Temperatura entre 8C y 15C, Y
-    - Humedad menor a 50%
-  - NO regar si condiciones no se cumplen
-  - Manejar excepcion si no hay agua disponible
+  - OObservar sensores de ocupación y limpieza
+  - Limpiar cuando:
+    - Ocupación menor a 10%, Y
+    - Nivel de limpieza menor a 70%
+  - NO limpiar si condiciones no se cumplen
+  - Manejar excepción si no hay presupuesto disponible
 - [x] Implementar patron Observer (Observer[float])
 - [x] Recibir sensores via inyeccion de dependencias
 
 #### Detalles Tecnicos
 
-**Clase**: `ControlRiegoTask` (`python_forestacion/riego/control/control_riego_task.py`)
+**Clase**: `ControlLimpiezaTask` (`python_hotel/monitoreo/control/control_limpieza_task.py`)
 **Patron**: Observer (observa sensores)
 
 **Codigo de ejemplo**:
 ```python
-from python_forestacion.riego.control.control_riego_task import ControlRiegoTask
+from python_hotel.monitoreo.control.control_limpieza_task import ControlLimpiezaTask
 
 # Inyectar dependencias
-tarea_control = ControlRiegoTask(
-    sensor_temperatura=tarea_temp,
-    sensor_humedad=tarea_hum,
-    plantacion=plantacion,
-    plantacion_service=plantacion_service
+control_limpieza = ControlLimpiezaTask(
+    sensor_ocupacion=sensor_ocupacion,
+    sensor_limpieza=sensor_limpieza,
+    ala_hotel=ala_hotel,
+    ala_hotel_service=ala_hotel_service
 )
 
-# Iniciar control automatico
-tarea_control.start()
+# Iniciar control automático
+control_limpieza.start()
 
 # Detener cuando sea necesario
-tarea_control.detener()
-tarea_control.join(timeout=2.0)
+control_limpieza.detener()
+control_limpieza.join(timeout=2.0)
 ```
 
 **Logica de decision**:
 ```python
-if (TEMP_MIN_RIEGO <= temperatura <= TEMP_MAX_RIEGO) and (humedad < HUMEDAD_MAX_RIEGO):
-    # REGAR
-    plantacion_service.regar(plantacion)
+if (ocupacion < OCUPACION_MAX_LIMPIEZA) and (limpieza < LIMPIEZA_MIN_REQUERIDA):
+    # LIMPIAR
+    ala_hotel_service.limpiar(ala_hotel)
 else:
-    # NO REGAR
+    # NO LIMPIAR
     pass
 ```
 
 **Constantes de riego**:
 ```python
-TEMP_MIN_RIEGO = 8  # °C
-TEMP_MAX_RIEGO = 15  # °C
-HUMEDAD_MAX_RIEGO = 50  # %
-INTERVALO_CONTROL_RIEGO = 2.5  # segundos
+OCUPACION_MAX_LIMPIEZA = 10  # %
+LIMPIEZA_MIN_REQUERIDA = 70  # %
+INTERVALO_CONTROL_LIMPIEZA = 2.5  # segundos
 ```
 
-**Trazabilidad**: `main.py` lineas 160-166, `control_riego_task.py` lineas 67-91
+**Trazabilidad**: `main.py` lineas 160-166
 
 ---
 
-### US-013: Detener Sistema de Riego de Forma Segura
+### US-013:  Detener Sistema de Limpieza de Forma Segura
 
 **Como** administrador del sistema
-**Quiero** detener el sistema de riego de forma controlada
-**Para** evitar corrupcion de datos o procesos incompletos
+**Quiero** detener el sistema de limpieza de forma controlada
+**Para**  evitar corrupción de datos o procesos incompletos
 
 #### Criterios de Aceptacion
 
@@ -655,19 +651,19 @@ INTERVALO_CONTROL_RIEGO = 2.5  # segundos
 
 **Codigo de ejemplo**:
 ```python
-from python_forestacion.constantes import THREAD_JOIN_TIMEOUT
+from python_hotel.constantes import THREAD_JOIN_TIMEOUT
 
 # Detener sensores y control
-tarea_temp.detener()
-tarea_hum.detener()
-tarea_control.detener()
+sensor_ocupacion.detener()
+sensor_limpieza.detener()
+control_limpieza.detener()
 
-# Esperar finalizacion con timeout
-tarea_temp.join(timeout=THREAD_JOIN_TIMEOUT)  # 2s
-tarea_hum.join(timeout=THREAD_JOIN_TIMEOUT)
-tarea_control.join(timeout=THREAD_JOIN_TIMEOUT)
+# Esperar finalización con timeout
+sensor_ocupacion.join(timeout=THREAD_JOIN_TIMEOUT)  # 2s
+sensor_limpieza.join(timeout=THREAD_JOIN_TIMEOUT)
+control_limpieza.join(timeout=THREAD_JOIN_TIMEOUT)
 
-# Si timeout expira, threads daemon finalizan automaticamente
+# Si timeout expira, threads daemon finalizan automáticamente
 ```
 
 **Constantes**:
@@ -681,50 +677,49 @@ THREAD_JOIN_TIMEOUT = 2.0  # segundos
 
 ## Epic 4: Gestion de Personal
 
-### US-014: Registrar Trabajador con Tareas Asignadas
-
+### US-014: Registrar Empleado con Tareas Asignadas
 **Como** jefe de personal
-**Quiero** registrar trabajadores con sus tareas asignadas
-**Para** organizar el trabajo agricola
+**Quiero** registrar empleados con sus tareas asignadas
+**Para** organizar el trabajo hotelero
 
 #### Criterios de Aceptacion
 
-- [x] Un trabajador debe tener:
-  - DNI unico (numero entero)
+- [x] Un empleado debe tener:
+  - DNI único (número entero)
   - Nombre completo
   - Lista de tareas asignadas (puede estar vacia)
-  - Apto medico (inicialmente sin apto)
+  - Certificación (inicialmente sin certificación)
 - [x] Las tareas deben tener:
   - ID unico
   - Fecha programada
   - Descripcion de la tarea
   - Estado (pendiente/completada)
-- [x] Un trabajador puede tener multiples tareas
-- [x] Lista de trabajadores es inmutable (defensive copy)
+- [x] Un empleado puede tener múltiples tareas
+- [x]Lista de empleados es inmutable (defensive copy)
 
 #### Detalles Tecnicos
 
 **Clases**:
-- `Trabajador` (`python_forestacion/entidades/personal/trabajador.py`)
-- `Tarea` (`python_forestacion/entidades/personal/tarea.py`)
+- `Empleado` (`python_hotel/entidades/personal/empleado.py`)
+- `Tarea` (`python_hotel/entidades/personal/tarea.py`)
 
 **Codigo de ejemplo**:
 ```python
-from python_forestacion.entidades.personal.trabajador import Trabajador
-from python_forestacion.entidades.personal.tarea import Tarea
+ffrom python_hotel.entidades.personal.empleado import Empleado
+from python_hotel.entidades.personal.tarea import Tarea
 from datetime import date
 
 # Crear tareas
 tareas = [
-    Tarea(1, date.today(), "Desmalezar"),
-    Tarea(2, date.today(), "Abonar"),
-    Tarea(3, date.today(), "Marcar surcos")
+    Tarea(1, date.today(), "Limpiar habitaciones 101-110"),
+    Tarea(2, date.today(), "Reabastecer amenities"),
+    Tarea(3, date.today(), "Revisar sistema de climatización")
 ]
 
-# Crear trabajador
-trabajador = Trabajador(
+# Crear empleado
+empleado = Empleado(
     dni=43888734,
-    nombre="Juan Perez",
+    nombre="María González",
     tareas=tareas
 )
 ```
@@ -733,145 +728,143 @@ trabajador = Trabajador(
 
 ---
 
-### US-015: Asignar Apto Medico a Trabajador
+### US-015: Asignar Certificación a Empleado
 
-**Como** medico laboral
-**Quiero** asignar un apto medico a un trabajador
-**Para** certificar que esta apto para trabajar
+**Como** gerente de recursos humanos
+**Quiero** asignar una certificación a un empleado
+**Para** certificar que está calificado para trabajar
 
 #### Criterios de Aceptacion
 
-- [x] Un apto medico debe tener:
-  - Estado de aptitud (True/False)
+- [x] Una certificación debe tener:
+  - Estado de certificación (True/False)
   - Fecha de emision
-  - Observaciones medicas (opcional)
-- [x] El sistema debe verificar apto antes de trabajar
-- [x] Si no tiene apto valido, no puede ejecutar tareas
-- [x] El servicio debe permitir asignar/actualizar apto
+  - Observaciones profesionales (opcional)
+- [x] El sistema debe verificar certificación antes de trabajar
+- [x] Si no tiene certificación válida, no puede ejecutar tareas
+- [x] El servicio debe permitir asignar/actualizar certificación
 
 #### Detalles Tecnicos
 
-**Clase**: `AptoMedico` (`python_forestacion/entidades/personal/apto_medico.py`)
-**Servicio**: `TrabajadorService.asignar_apto_medico()`
+**Clase**: `Certificacion` (`python_hotel/entidades/personal/certificacion.py`)
+**Servicio**: `EmpleadoService.asignar_certificacion()`
 
 **Codigo de ejemplo**:
 ```python
-from python_forestacion.servicios.personal.trabajador_service import TrabajadorService
+ffrom python_hotel.servicios.personal.empleado_service import EmpleadoService
 from datetime import date
 
-trabajador_service = TrabajadorService()
+empleado_service = EmpleadoService()
 
-# Asignar apto medico
-trabajador_service.asignar_apto_medico(
-    trabajador=trabajador,
-    apto=True,
+# Asignar certificación
+empleado_service.asignar_certificacion(
+    empleado=empleado,
+    certificada=True,
     fecha_emision=date.today(),
-    observaciones="Estado de salud: excelente"
+    observaciones="Certificación en limpieza hotelera avanzada"
 )
 
-# Verificar apto
-if trabajador.get_apto_medico().esta_apto():
-    print("Trabajador apto para trabajar")
+# Verificar certificación
+if empleado.get_certificacion().esta_certificada():
+    print("Empleado certificado para trabajar")
 else:
-    print("Trabajador NO apto")
+    print("Empleado NO certificado")
 ```
 
 **Trazabilidad**: `main.py` lineas 191-196
 
 ---
 
-### US-016: Ejecutar Tareas Asignadas a Trabajador
+### US-016:  Ejecutar Tareas Asignadas a Empleado
 
-**Como** trabajador agricola
+**Como** empleado de limpieza
 **Quiero** ejecutar las tareas que me fueron asignadas
 **Para** completar mi jornada laboral
 
 #### Criterios de Aceptacion
 
-- [x] El trabajador debe:
-  - Tener apto medico valido
+- [x] El empleado debe:
+  - Tener certificación válida
   - Ejecutar solo tareas de la fecha especificada
-  - Usar una herramienta asignada
+  - Usar un equipo de limpieza asignado
   - Marcar tareas como completadas
 - [x] Las tareas deben ejecutarse en orden ID descendente
-- [x] Si no tiene apto medico, retornar False (no ejecuta)
-- [x] Si tiene apto medico, retornar True (ejecuta)
-
+- [x] Si no tiene certificación, retornar False (no ejecuta)
+- [x] Si tiene certificación, retornar True (ejecuta)
 #### Detalles Tecnicos
 
-**Servicio**: `TrabajadorService.trabajar()`
-**Clase**: `Herramienta` (`python_forestacion/entidades/personal/herramienta.py`)
+**Servicio**: `EmpleadoService.trabajar()`
+**Clase**: `EquipoLimpieza` (`python_hotel/entidades/personal/equipo_limpieza.py`)
 
 **Codigo de ejemplo**:
 ```python
-from python_forestacion.entidades.personal.herramienta import Herramienta
+from python_hotel.entidades.personal.equipo_limpieza import EquipoLimpieza
 
-# Crear herramienta
-herramienta = Herramienta(
-    id_herramienta=1,
-    nombre="Pala",
-    certificado_hys=True
+# Crear equipo
+equipo = EquipoLimpieza(
+    id_equipo=1,
+    nombre="Carro de limpieza premium",
+    certificado_higiene=True
 )
 
 # Ejecutar tareas
-resultado = trabajador_service.trabajar(
-    trabajador=trabajador,
+resultado = empleado_service.trabajar(
+    empleado=empleado,
     fecha=date.today(),
-    util=herramienta
+    equipo=equipo
 )
 
 if resultado:
     print("Tareas ejecutadas exitosamente")
 else:
-    print("No puede trabajar - sin apto medico")
+    print("No puede trabajar - sin certificación válida")
 ```
 
 **Salida esperada**:
 ```
-El trabajador Juan Perez realizo la tarea 3 Marcar surcos con herramienta: Pala
-El trabajador Juan Perez realizo la tarea 2 Abonar con herramienta: Pala
-El trabajador Juan Perez realizo la tarea 1 Desmalezar con herramienta: Pala
+El empleado María González realizó la tarea 3 Revisar sistema de climatización con equipo: Carro de limpieza premium
+El empleado María González realizó la tarea 2 Reabastecer amenities con equipo: Carro de limpieza premium
+El empleado María González realizó la tarea 1 Limpiar habitaciones 101-110 con equipo: Carro de limpieza premium
 ```
 
 **Ordenamiento**:
 ```python
-# Tareas se ordenan por ID descendente (3, 2, 1)
-# Usa metodo estatico _obtener_id_tarea() en lugar de lambda
+## Tareas se ordenan por ID descendente (3, 2, 1)
+# Usa método estático _obtener_id_tarea() en lugar de lambda
 ```
 
-**Trazabilidad**: `main.py` lineas 199-204, `trabajador_service.py` lineas 34-72
+**Trazabilidad**: `main.py` lineas 199-204, `empleado_service.py` lineas 34-72
 
 ---
 
-### US-017: Asignar Trabajadores a Plantacion
-
+### US-017:  Asignar Empleados a Ala Hotel
 **Como** jefe de personal
-**Quiero** asignar trabajadores a una plantacion especifica
-**Para** organizar el personal por finca
+**Quiero** asignar empleados a un ala específica
+**Para** organizar el personal por área
 
 #### Criterios de Aceptacion
 
-- [x] Una plantacion debe poder tener multiples trabajadores
-- [x] La lista de trabajadores debe ser inmutable (defensive copy)
-- [x] Debe poder obtener lista de trabajadores
-- [x] Debe poder reemplazar lista completa de trabajadores
+- [x] Un ala debe poder tener múltiples empleados
+- [x] La lista de empleados debe ser inmutable (defensive copy)
+- [x] Debe poder obtener lista de empleados
+- [x] Debe poder reemplazar lista completa de empleados
 
 #### Detalles Tecnicos
 
-**Clase**: `Plantacion.set_trabajadores()`
+**Clase**: `AlaHotel.set_empleados()`
 
 **Codigo de ejemplo**:
 ```python
-trabajadores = [
-    Trabajador(43888734, "Juan Perez", tareas.copy()),
-    Trabajador(40222333, "Maria Lopez", tareas.copy())
+empleados = [
+    Empleado(43888734, "María González", tareas.copy()),
+    Empleado(40222333, "Carlos López", tareas.copy())
 ]
 
-# Asignar trabajadores a plantacion
-plantacion.set_trabajadores(trabajadores)
+# Asignar empleados al ala
+ala_hotel.set_empleados(empleados)
 
-# Obtener trabajadores (copia inmutable)
-lista_trabajadores = plantacion.get_trabajadores()
+# Obtener empleados (copia inmutable)
+lista_empleados = ala_hotel.get_empleados()
 ```
 
 **Trazabilidad**: `main.py` linea 187
@@ -880,138 +873,138 @@ lista_trabajadores = plantacion.get_trabajadores()
 
 ## Epic 5: Operaciones de Negocio
 
-### US-018: Gestionar Multiples Fincas
+### US-018:  Gestionar Múltiples Hoteles
 
-**Como** propietario de multiples fincas
-**Quiero** gestionar varias fincas desde un servicio centralizado
-**Para** tener control unificado de todas mis propiedades
+**Como**  propietario de múltiples hoteles
+**Quiero**  gestionar varios hoteles desde un servicio centralizado
+**Para**  tener control unificado de todas mis propiedades
 
 #### Criterios de Aceptacion
 
 - [x] El servicio debe permitir:
-  - Agregar fincas (RegistroForestal)
-  - Buscar finca por ID de padron
-  - Fumigar una finca especifica
-  - Cosechar y empaquetar por tipo de cultivo
-- [x] Debe manejar multiples fincas simultaneamente
-- [x] Debe usar diccionario interno para almacenar fincas
+  - Agregar hoteles (RegistroHotelero)
+  - Buscar hotel por ID
+  - Desinfectar un hotel específico
+  - Realizar check-out y empaquetar por tipo de habitación
+- [x] Debe manejar múltiples hoteles simultáneamente
+- [x] Debe usar diccionario interno para almacenar hoteles
 
 #### Detalles Tecnicos
 
-**Servicio**: `FincasService` (`python_forestacion/servicios/negocio/fincas_service.py`)
+**Servicio**: `HotelesService` (`python_hotel/servicios/negocio/hoteles_service.py`)
 
 **Codigo de ejemplo**:
 ```python
-from python_forestacion.servicios.negocio.fincas_service import FincasService
+from python_hotel.servicios.negocio.hoteles_service import HotelesService
 
-fincas_service = FincasService()
+hoteles_service = HotelesService()
 
-# Agregar finca
-fincas_service.add_finca(registro)
+# Agregar hotel
+hoteles_service.add_hotel(registro)
 
-# Buscar finca por padron
-finca = fincas_service.buscar_finca(1)
+# Buscar hotel por ID
+hotel = hoteles_service.buscar_hotel(1)
 ```
 
 **Trazabilidad**: `main.py` linea 225
 
 ---
 
-### US-019: Fumigar Plantacion Completa
+### US-019: Desinfectar Ala Completa
 
-**Como** tecnico agricola
-**Quiero** fumigar toda una plantacion con un plaguicida especifico
-**Para** controlar plagas y enfermedades
+**Como**  supervisor de mantenimiento
+**Quiero** desinfectar toda un ala con un desinfectante específico
+**Para** controlar gérmenes y garantizar higiene
 
 #### Criterios de Aceptacion
 
 - [x] Debe permitir especificar:
-  - ID de padron de la finca a fumigar
-  - Tipo de plaguicida a aplicar
-- [x] Debe fumigar todos los cultivos de la plantacion
-- [x] Debe mostrar mensaje de confirmacion
-- [x] Si finca no existe, manejar error apropiadamente
+  - ID del hotel a desinfectar
+  - Tipo de desinfectante a aplicar
+- [x] Debe desinfectar todas las habitaciones del ala
+- [x] Debe mostrar mensaje de confirmación
+- [x] Si hotel no existe, manejar error apropiadamente
 
 #### Detalles Tecnicos
 
-**Servicio**: `FincasService.fumigar()`
+**Servicio**: `HotelesService.desinfectar()`
 
 **Codigo de ejemplo**:
 ```python
-# Fumigar finca ID 1 con insecticida
-fincas_service.fumigar(
-    id_padron=1,
-    plaguicida="insecto organico"
+# Desinfectar hotel ID 1 con desinfectante
+hoteles_service.desinfectar(
+    id_hotel=1,
+    desinfectante="desinfectante orgánico"
 )
 ```
 
 **Salida esperada**:
 ```
-Fumigando plantacion con: insecto organico
+Desinfectando ala con: desinfectante orgánico
 ```
 
 **Trazabilidad**: `main.py` linea 228
 
 ---
 
-### US-020: Cosechar y Empaquetar Cultivos por Tipo
+### US-020: Realizar Check-out y Empaquetar Habitaciones por Tipo
 
-**Como** encargado de cosecha
-**Quiero** cosechar todos los cultivos de un tipo especifico y empaquetarlos
-**Para** preparar productos para venta
+**Como** encargado de recepción
+**Quiero** realizar check-out de todas las habitaciones de un tipo específico y empaquetarlas
+**Para**  preparar registros para auditoría
 
 #### Criterios de Aceptacion
 
-- [x] Debe permitir cosechar por tipo de cultivo (Class type)
+- [x] Debe permitir check-out por tipo de habitación (Class type)
 - [x] Debe:
-  - Buscar todos los cultivos del tipo especificado
-  - Removerlos de todas las plantaciones
-  - Empaquetarlos en un Paquete generico tipo-seguro
-  - Mostrar cantidad cosechada
+  - Buscar todas las habitaciones del tipo especificado
+  - Removerlas de todas las alas
+  - Empaquetarlas en un Paquete genérico tipo-seguro
+  - Mostrar cantidad procesada
 - [x] Usar Generics para tipo-seguridad: `Paquete[T]`
 - [x] Permitir mostrar contenido de la caja
 
 #### Detalles Tecnicos
 
-**Servicio**: `FincasService.cosechar_yempaquetar()`
-**Clase**: `Paquete[T]` (`python_forestacion/servicios/negocio/paquete.py`)
+**Servicio**: `HotelesService.realizar_checkout_y_empaquetar()`
+**Clase**: `Paquete[T]` (`python_hotel/servicios/negocio/paquete.py`)
 
 **Codigo de ejemplo**:
 ```python
-from python_forestacion.entidades.cultivos.lechuga import Lechuga
-from python_forestacion.entidades.cultivos.pino import Pino
+from python_hotel.entidades.habitaciones.habitacion_simple import HabitacionSimple
+from python_hotel.entidades.habitaciones.suite import Suite
 
-# Cosechar todas las lechugas
-caja_lechugas = fincas_service.cosechar_yempaquetar(Lechuga)
-caja_lechugas.mostrar_contenido_caja()
+# Realizar check-out de todas las habitaciones simples
+paquete_simples = hoteles_service.realizar_checkout_y_empaquetar(HabitacionSimple)
+paquete_simples.mostrar_contenido_caja()
 
-# Cosechar todos los pinos
-caja_pinos = fincas_service.cosechar_yempaquetar(Pino)
-caja_pinos.mostrar_contenido_caja()
+# Realizar check-out de todas las suites
+paquete_suites = hoteles_service.realizar_checkout_y_empaquetar(Suite)
+paquete_suites.mostrar_contenido_caja()
 ```
 
 **Salida esperada**:
 ```
-COSECHANDO 5 unidades de <class 'python_forestacion.entidades.cultivos.lechuga.Lechuga'>
+REALIZANDO CHECK-OUT de 5 unidades de <class 'python_hotel.entidades.habitaciones.habitacion_simple.HabitacionSimple'>
 
-Contenido de la caja:
-  Tipo: Lechuga
+Contenido del paquete:
+  Tipo: HabitacionSimple
   Cantidad: 5
   ID Paquete: 1
 
-COSECHANDO 5 unidades de <class 'python_forestacion.entidades.cultivos.pino.Pino'>
+REALIZANDO CHECK-OUT de 2 unidades de <class 'python_hotel.entidades.habitaciones.suite.Suite'>
 
-Contenido de la caja:
-  Tipo: Pino
-  Cantidad: 5
+Contenido del paquete:
+  Tipo: Suite
+  Cantidad: 2
   ID Paquete: 2
 ```
 
 **Tipo-seguridad**:
 ```python
-# Paquete es generico tipo-seguro
-caja_lechugas: Paquete[Lechuga] = ...
-caja_pinos: Paquete[Pino] = ...
+# Paquete es genérico tipo-seguro
+paquete_simples: Paquete[HabitacionSimple] = ...
+paquete_suites: Paquete[Suite] = ...
 ```
 
 **Trazabilidad**: `main.py` lineas 232-236
@@ -1020,16 +1013,16 @@ caja_pinos: Paquete[Pino] = ...
 
 ## Epic 6: Persistencia y Auditoria
 
-### US-021: Persistir Registro Forestal en Disco
+### US-021:  Persistir Registro Hotelero en Disco
 
 **Como** administrador del sistema
-**Quiero** guardar registros forestales en disco
+**Quiero** guardar registros hoteleros en disco
 **Para** mantener datos permanentes entre ejecuciones
 
 #### Criterios de Aceptacion
 
 - [x] El sistema debe:
-  - Serializar RegistroForestal completo con Pickle
+  - Serializar RegistroHotelero completo con Pickle
   - Guardar en directorio `data/`
   - Nombre de archivo: `{propietario}.dat`
   - Crear directorio si no existe
@@ -1039,22 +1032,22 @@ caja_pinos: Paquete[Pino] = ...
 
 #### Detalles Tecnicos
 
-**Servicio**: `RegistroForestalService.persistir()`
+**Servicio**: `RegistroHoteleroService.persistir()`
 
 **Codigo de ejemplo**:
 ```python
-from python_forestacion.servicios.terrenos.registro_forestal_service import RegistroForestalService
+from python_hotel.servicios.hotel.registro_hotelero_service import RegistroHoteleroService
 
-registro_service = RegistroForestalService()
+registro_service = RegistroHoteleroService()
 
 # Persistir registro
 registro_service.persistir(registro)
-# Crea: data/Juan Perez.dat
+# Crea: data/Carlos Rodríguez.dat
 ```
 
 **Salida esperada**:
 ```
-Registro de Juan Perez persistido exitosamente en data/Juan Perez.dat
+Registro de Carlos Rodríguez persistido exitosamente en data/Carlos Rodríguez.dat
 ```
 
 **Constantes**:
@@ -1070,17 +1063,17 @@ try:
 except PersistenciaException as e:
     print(e.get_user_message())
     print(f"Archivo: {e.get_nombre_archivo()}")
-    print(f"Operacion: {e.get_tipo_operacion().value}")
+    print(f"Operación: {e.get_tipo_operacion().value}")
 ```
 
-**Trazabilidad**: `main.py` linea 242, `registro_forestal_service.py` lineas 62-112
+**Trazabilidad**: `main.py` linea 242, 
 
 ---
 
-### US-022: Recuperar Registro Forestal desde Disco
+### US-022:  Recuperar Registro Hotelero desde Disco
 
 **Como** auditor
-**Quiero** recuperar registros forestales guardados previamente
+**Quiero** recuperar registros  hoteleros guardados previamente
 **Para** consultar historicos y realizar auditorias
 
 #### Criterios de Aceptacion
@@ -1089,7 +1082,7 @@ except PersistenciaException as e:
   - Deserializar archivo `.dat` con Pickle
   - Buscar en directorio `data/`
   - Validar que propietario no sea nulo/vacio
-  - Retornar RegistroForestal completo
+  - Retornar RegistroHotelero completo
   - Mostrar mensaje de confirmacion
 - [x] Si archivo no existe, lanzar `PersistenciaException`
 - [x] Si archivo corrupto, lanzar `PersistenciaException`
@@ -1097,12 +1090,12 @@ except PersistenciaException as e:
 
 #### Detalles Tecnicos
 
-**Servicio**: `RegistroForestalService.leer_registro()` (metodo estatico)
+**Servicio**: `RegistroHoteleroService.leer_registro()` (metodo estatico)
 
 **Codigo de ejemplo**:
 ```python
-# Leer registro persistido
-registro_leido = RegistroForestalService.leer_registro("Juan Perez")
+## Leer registro persistido
+registro_leido = RegistroHoteleroService.leer_registro("Carlos Rodríguez")
 
 # Mostrar datos recuperados
 registro_service.mostrar_datos(registro_leido)
@@ -1110,58 +1103,58 @@ registro_service.mostrar_datos(registro_leido)
 
 **Salida esperada**:
 ```
-Registro de Juan Perez recuperado exitosamente desde data/Juan Perez.dat
+Registro de Carlos Rodríguez recuperado exitosamente desde data/Carlos Rodríguez.dat
 
-REGISTRO FORESTAL
+REGISTRO HOTELERO
 =================
-Padron:      1
-Propietario: Juan Perez
-Avaluo:      50309233.55
+Hotel ID:      1
+Propietario:   Carlos Rodríguez
+Avalúo:        15000000.75
 ...
 ```
 
 **Validaciones**:
 ```python
-# Propietario vacio
+# Propietario vacío
 try:
-    RegistroForestalService.leer_registro("")
+    RegistroHoteleroService.leer_registro("")
 except ValueError as e:
-    print("El nombre del propietario no puede ser nulo o vacio")
+    print("El nombre del propietario no puede ser nulo o vacío")
 
 # Archivo no existe
 try:
-    RegistroForestalService.leer_registro("NoExiste")
+    RegistroHoteleroService.leer_registro("NoExiste")
 except PersistenciaException as e:
     print(f"Archivo no encontrado: {e.get_nombre_archivo()}")
 ```
 
-**Trazabilidad**: `main.py` lineas 246-247, `registro_forestal_service.py` lineas 114-171
+**Trazabilidad**: `main.py` lineas 246-247, 
 
 ---
 
-### US-023: Mostrar Datos Completos de Registro Forestal
+### US-023: Mostrar Datos Completos de Registro Hotelero
 
 **Como** auditor
-**Quiero** ver todos los datos de un registro forestal en formato legible
-**Para** analizar la informacion completa de una finca
+**Quiero** ver todos los datos de un registro hotelero en formato legible
+**Para** analizar la información completa de un hotel
 
 #### Criterios de Aceptacion
 
 - [x] El sistema debe mostrar:
-  - Encabezado "REGISTRO FORESTAL"
-  - Padron catastral
+  - Encabezado "REGISTRO HOTELERO"
+  - ID de hotel
   - Propietario
   - Avaluo fiscal
-  - Domicilio del terreno
-  - Superficie del terreno
-  - Cantidad de cultivos plantados
-  - Listado detallado de cada cultivo
-- [x] Cada cultivo debe mostrarse con datos especificos de su tipo
+  - Dirección del hotel
+  - Capacidad del hotel
+  - Cantidad de habitaciones configuradas
+  - Listado detallado de cada habitación
+- [x] CCada habitación debe mostrarse con datos específicos de su tipo
 - [x] Usar Registry para dispatch polimorfico
 
 #### Detalles Tecnicos
 
-**Servicio**: `RegistroForestalService.mostrar_datos()`
+**Servicio**: `RegistroHoteleroService.mostrar_datos()`
 
 **Codigo de ejemplo**:
 ```python
@@ -1171,41 +1164,39 @@ registro_service.mostrar_datos(registro)
 
 **Salida esperada**:
 ```
-REGISTRO FORESTAL
+REGISTRO HOTELERO
 =================
-Padron:      1
-Propietario: Juan Perez
-Avaluo:      50309233.55
-Domicilio:   Agrelo, Mendoza
-Superficie: 10000.0
-Cantidad de cultivos plantados: 20
-Listado de Cultivos plantados
-____________________________
+Hotel ID:      1
+Propietario:   Carlos Rodríguez
+Avalúo:        15000000.75
+Dirección:     Av. Principal 123, Ciudad
+Capacidad:     100
+Cantidad de habitaciones configuradas: 26
+Listado de Habitaciones configuradas
+____________________________________
 
-Cultivo: Pino
-Superficie: 2.0 m²
-Agua almacenada: 7 L
+Habitación: Simple
+Capacidad: 1 persona
+Tarifa base: 50.0 USD
 ID: 1
-Altura: 1.2 m
-Variedad: Parana
+Estado: Disponible
 
-Cultivo: Olivo
-Superficie: 3.0 m²
-Agua almacenada: 9 L
-ID: 2
-Altura: 0.52 m
-Tipo de aceituna: Arbequina
+Habitación: Doble
+Capacidad: 2 personas
+Tarifa base: 80.0 USD
+Servicios: Desayuno incluido
+Estado: Disponible
 
 ...
 ```
 
-**Trazabilidad**: `main.py` linea 247, `registro_forestal_service.py` lineas 28-60
+**Trazabilidad**: `main.py` linea 247, 
 
 ---
 
 ## Historias Tecnicas (Patrones de Diseno)
 
-### US-TECH-001: Implementar Singleton para CultivoServiceRegistry
+### US-TECH-001: Implementar Singleton para HabitacionServiceRegistry
 
 **Como** arquitecto de software
 **Quiero** garantizar una unica instancia del registro de servicios
@@ -1222,14 +1213,14 @@ Tipo de aceituna: Arbequina
 
 #### Detalles Tecnicos
 
-**Clase**: `CultivoServiceRegistry`
+**Clase**: `HabitacionServiceRegistry`
 **Patron**: Singleton
 
 **Implementacion**:
 ```python
 from threading import Lock
 
-class CultivoServiceRegistry:
+class HabitacionServiceRegistry:
     _instance = None
     _lock = Lock()
 
@@ -1252,74 +1243,81 @@ class CultivoServiceRegistry:
 **Uso**:
 ```python
 # Opcion 1: Instanciacion directa
-registry = CultivoServiceRegistry()
+# Opcion 1: Instanciacion directa
+registry = HabitacionServiceRegistry()
 
 # Opcion 2: Metodo get_instance()
-registry = CultivoServiceRegistry.get_instance()
+registry = HabitacionServiceRegistry.get_instance()
 
 # Ambas retornan la MISMA instancia
-assert registry is CultivoServiceRegistry.get_instance()
+assert registry is HabitacionServiceRegistry.get_instance()
 ```
 
-**Trazabilidad**: `cultivo_service_registry.py` lineas 20-46
+**Trazabilidad**: `python_hotel/servicios/habitaciones/habitacion_service_registry.py` lineas 20-46
 
 ---
 
-### US-TECH-002: Implementar Factory Method para Creacion de Cultivos
+### US-TECH-002: Implementar Factory Method para Creacion de Habitacioness
 
 **Como** arquitecto de software
-**Quiero** centralizar creacion de cultivos mediante Factory Method
-**Para** desacoplar cliente de clases concretas
+**Quiero** centralizar creacion de habitaciones mediante Factory Method
+**Para** desacoplar cliente de clases concretas de habitaciones
 
 #### Criterios de Aceptacion
 
-- [x] Crear clase `CultivoFactory` con metodo estatico
-- [x] Soportar creacion de: Pino, Olivo, Lechuga, Zanahoria
-- [x] Usar diccionario de factories (no if/elif cascades)
-- [x] Lanzar `ValueError` si especie desconocida
-- [x] Retornar tipo base `Cultivo` (no tipos concretos)
-- [x] NO usar lambdas - usar metodos estaticos dedicados
+
+[x] Crear clase HabitacionFactory con método estático
+
+[x] Soportar creación de: Simple, Doble, Suite, Presidencial
+
+[x] Usar diccionario de factories (no if/elif cascades)
+
+[x] Lanzar ValueError si el tipo de habitación es desconocido
+
+[x] Retornar tipo base Habitacion (no tipos concretos)
+
+[x] NO usar lambdas - usar métodos estáticos dedicados
 
 #### Detalles Tecnicos
 
-**Clase**: `CultivoFactory`
+**Clase**: `HabitacionFactory`
 **Patron**: Factory Method
 
 **Implementacion**:
 ```python
-class CultivoFactory:
+class HabitacionFactory:
     @staticmethod
-    def crear_cultivo(especie: str) -> Cultivo:
+    def crear_habitacion(tipo: str) -> Habitacion:
         factories = {
-            "Pino": CultivoFactory._crear_pino,
-            "Olivo": CultivoFactory._crear_olivo,
-            "Lechuga": CultivoFactory._crear_lechuga,
-            "Zanahoria": CultivoFactory._crear_zanahoria
+            "Simple": HabitacionFactory._crear_simple,
+            "Doble": HabitacionFactory._crear_doble,
+            "Suite": HabitacionFactory._crear_suite,
+            "Presidencial": HabitacionFactory._crear_presidencial
         }
 
-        if especie not in factories:
-            raise ValueError(f"Especie desconocida: {especie}")
+        if tipo not in factories:
+            raise ValueError(f"Tipo de habitación desconocido: {tipo}")
 
-        return factories[especie]()
+        return factories[tipo]()
 
     @staticmethod
-    def _crear_pino() -> Pino:
-        from python_forestacion.entidades.cultivos.pino import Pino
-        return Pino(variedad="Parana")
+    def _crear_simple() -> HabitacionSimple:
+        from python_hotel.entidades.habitaciones.habitacion_simple import HabitacionSimple
+        return HabitacionSimple(servicios_basicos=True)
 
     # ... otros metodos _crear_*
 ```
 
 **Uso**:
 ```python
-from python_forestacion.patrones.factory.cultivo_factory import CultivoFactory
+ffrom python_hotel.patrones.factory.habitacion_factory import HabitacionFactory
 
 # Cliente NO conoce clases concretas
-cultivo = CultivoFactory.crear_cultivo("Pino")
-# Retorna Cultivo (interfaz), no Pino (concreto)
+habitacion = HabitacionFactory.crear_habitacion("Simple")
+# Retorna Habitacion (interfaz), no HabitacionSimple (concreto)
 ```
 
-**Trazabilidad**: `cultivo_factory.py` lineas 8-67
+**Trazabilidad**: `python_hotel/patrones/factory/habitacion_factory.py` lineas 8-67
 
 ---
 
@@ -1327,17 +1325,23 @@ cultivo = CultivoFactory.crear_cultivo("Pino")
 
 **Como** arquitecto de software
 **Quiero** implementar patron Observer con Generics
-**Para** notificar cambios de sensores de forma tipo-segura
+**Para** notificar cambios de sensores(ocupacion, limpieza) de forma tipo-segura
 
 #### Criterios de Aceptacion
 
-- [x] Crear clase `Observable[T]` generica
-- [x] Crear interfaz `Observer[T]` generica
-- [x] Soportar multiples observadores
-- [x] Metodos: `agregar_observador()`, `eliminar_observador()`, `notificar_observadores()`
-- [x] Sensores heredan de `Observable[float]`
-- [x] Controlador hereda de `Observer[float]`
-- [x] Thread-safe en notificaciones
+[x] Crear clase Observable[T] genérica
+
+[x] Crear interfaz Observer[T] genérica
+
+[x] Soportar múltiples observadores
+
+[x] Métodos: agregar_observador(), eliminar_observador(), notificar_observadores()
+
+[x] Sensores (OcupacionReaderTask, LimpiezaReaderTask) heredan de Observable[float]
+
+[x] Controlador (ControlLimpiezaTask) hereda de Observer[float]
+
+[x] Thread-safe en notificaciones (implícito en la simplicidad de la lista)
 
 #### Detalles Tecnicos
 
@@ -1372,159 +1376,167 @@ class Observable(Generic[T], ABC):
 **Uso**:
 ```python
 # Sensor es Observable[float]
-class TemperaturaReaderTask(threading.Thread, Observable[float]):
+class OcupacionReaderTask(threading.Thread, Observable[float]):
     def run(self):
         while not self._detenido.is_set():
-            temp = self._leer_temperatura()
-            self.notificar_observadores(temp)  # Notifica float
+            ocupacion = self._leer_ocupacion()
+            self.notificar_observadores(ocupacion)  # Notifica float
 
 # Controlador es Observer[float]
-class ControlRiegoTask(Observer[float]):
+class ControlLimpiezaTask(Observer[float]):
     def actualizar(self, evento: float) -> None:
-        self._ultima_temperatura = evento  # Recibe float
+        # Recibe la notificación (puede ser de ocupación o limpieza)
+        # El controlador decide cómo manejar el float
+        pass
 ```
 
-**Trazabilidad**: `observable.py`, `observer.py`
+**Trazabilidad**: `python_hotel/patrones/observer/observable.py, observer.py`
 
 ---
 
-### US-TECH-004: Implementar Strategy Pattern para Absorcion de Agua
-
+### US-TECH-004: Implementar Strategy Pattern para Mantenimiento
 **Como** arquitecto de software
-**Quiero** implementar algoritmos intercambiables de absorcion
-**Para** permitir diferentes estrategias segun tipo de cultivo
+**Quiero** implementar algoritmos intercambiables de mantenimiento
+**Para** permitir diferentes estrategias segun tipo de habitación (Estándar vs. Premium)
 
 #### Criterios de Aceptacion
 
-- [x] Crear interfaz `AbsorcionAguaStrategy` abstracta
-- [x] Implementar `AbsorcionSeasonalStrategy` (arboles)
-- [x] Implementar `AbsorcionConstanteStrategy` (hortalizas)
-- [x] Inyectar estrategia en constructor de servicios
-- [x] Servicios delegan calculo a estrategia
-- [x] Estrategias usan constantes de `constantes.py`
+[x] Crear interfaz MantenimientoStrategy abstracta
+
+[x] Implementar MantenimientoEstandarStrategy (habitaciones estándar)
+
+[x] Implementar MantenimientoPremiumStrategy (suites)
+
+[x] Inyectar estrategia en constructor de servicios de habitación
+
+[x] Servicios delegan cálculo de mantenimiento a la estrategia
+
+[x] Estrategias usan constantes de constantes.py
 
 #### Detalles Tecnicos
 
-**Interfaz**: `AbsorcionAguaStrategy`
-**Implementaciones**: `AbsorcionSeasonalStrategy`, `AbsorcionConstanteStrategy`
+**Interfaz**: `MantenimientoStrategy`
+**Implementaciones**: `MantenimientoEstandarStrategy`, `AMantenimientoPremiumStrategy`
 **Patron**: Strategy
 
 **Implementacion**:
 ```python
 # Interfaz
-class AbsorcionAguaStrategy(ABC):
+class MantenimientoStrategy(ABC):
     @abstractmethod
-    def calcular_absorcion(
+    def calcular_mantenimiento(
         self,
         fecha: date,
-        temperatura: float,
-        humedad: float,
-        cultivo: 'Cultivo'
+        ocupacion: float,
+        habitacion: 'Habitacion'
     ) -> int:
         pass
 
-# Estrategia 1: Seasonal
-class AbsorcionSeasonalStrategy(AbsorcionAguaStrategy):
-    def calcular_absorcion(self, fecha, temperatura, humedad, cultivo):
-        mes = fecha.month
-        if MES_INICIO_VERANO <= mes <= MES_FIN_VERANO:
-            return ABSORCION_SEASONAL_VERANO  # 5L
+# Estrategia 1: Estandar
+class MantenimientoEstandarStrategy(MantenimientoStrategy):
+    def calcular_mantenimiento(self, fecha, ocupacion, habitacion):
+        if ocupacion < 0.3: # Baja ocupación
+            return MANTENIMIENTO_ESTANDAR_COMPLETO # 60 min
         else:
-            return ABSORCION_SEASONAL_INVIERNO  # 2L
+            return MANTENIMIENTO_ESTANDAR_BASICO # 30 min
 
-# Estrategia 2: Constante
-class AbsorcionConstanteStrategy(AbsorcionAguaStrategy):
-    def __init__(self, cantidad_constante: int):
-        self._cantidad = cantidad_constante
+# Estrategia 2: Premium
+class MantenimientoPremiumStrategy(MantenimientoStrategy):
+    def __init__(self, tiempo_constante: int):
+        self._tiempo = tiempo_constante
 
-    def calcular_absorcion(self, fecha, temperatura, humedad, cultivo):
-        return self._cantidad
+    def calcular_mantenimiento(self, fecha, ocupacion, habitacion):
+        return self._tiempo # Siempre el mismo tiempo (ej. 90 min)
 ```
 
 **Inyeccion**:
 ```python
-class PinoService(ArbolService):
+class HabitacionSimpleService(HabitacionService):
     def __init__(self):
-        super().__init__(AbsorcionSeasonalStrategy())  # Inyeccion
+        super().__init__(MantenimientoEstandarStrategy())  # Inyeccion
 
-class ZanahoriaService(CultivoService):
+class SuitePresidencialService(HabitacionService):
     def __init__(self):
-        super().__init__(AbsorcionConstanteStrategy(2))  # Inyeccion
+        super().__init__(MantenimientoPremiumStrategy(90))  # Inyeccion
 ```
 
 **Delegacion**:
 ```python
-class CultivoService(ABC):
-    def absorver_agua(self, cultivo: 'Cultivo') -> int:
+class HabitacionService(ABC):
+    def realizar_mantenimiento(self, habitacion: 'Habitacion') -> int:
         # Delegar a estrategia
-        agua_absorvida = self._estrategia_absorcion.calcular_absorcion(
-            fecha, temperatura, humedad, cultivo
+        tiempo_mantenimiento = self._estrategia_mantenimiento.calcular_mantenimiento(
+            fecha, ocupacion, habitacion
         )
-        cultivo.set_agua(cultivo.get_agua() + agua_absorvida)
-        return agua_absorvida
+        habitacion.set_estado("En Mantenimiento")
+        return tiempo_mantenimiento
 ```
 
-**Trazabilidad**: `absorcion_seasonal_strategy.py`, `absorcion_constante_strategy.py`, `cultivo_service.py` lineas 35-59
+**Trazabilidad**: `python_hotel/patrones/strategy/impl/mantenimiento_estandar_strategy.py, mantenimiento_premium_strategy.py` lineas 35-59
 
 ---
 
-### US-TECH-005: Implementar Registry Pattern para Dispatch Polimorfico
+### US-TECH-005: Implementar Registry Pattern para Dispatch Polimórfico
 
 **Como** arquitecto de software
-**Quiero** eliminar cascadas de isinstance()
+**Quiero** eliminar cascadas de isinstance() al operar sobre habitaciones
 **Para** mejorar mantenibilidad y extensibilidad
 
 #### Criterios de Aceptacion
 
-- [x] Crear diccionarios de handlers por tipo
-- [x] Registrar handler para cada tipo de cultivo
-- [x] Metodo `absorber_agua()` usa dispatch automatico
-- [x] Metodo `mostrar_datos()` usa dispatch automatico
-- [x] Lanzar error si tipo no registrado
-- [x] NO usar lambdas - usar metodos de instancia dedicados
+[x] Crear diccionarios de handlers por tipo de habitación
+
+[x] Registrar un handler para cada tipo (Simple, Doble, Suite, Presidencial)
+
+[x] Método realizar_mantenimiento() usa dispatch automático
+
+[x] Método mostrar_datos_especificos() usa dispatch automático
+
+[x] Lanzar error si el tipo de habitación no está registrado
+
+[x] NO usar lambdas - usar métodos de instancia dedicados
 
 #### Detalles Tecnicos
 
-**Clase**: `CultivoServiceRegistry`
+**Clase**: `HabitacionServiceRegistry`
 **Patron**: Registry
 
 **Implementacion**:
 ```python
-class CultivoServiceRegistry:
+class HabitacionServiceRegistry:
     def __init__(self):
         # Diccionarios de handlers
-        self._absorber_agua_handlers = {
-            Pino: self._absorber_agua_pino,
-            Olivo: self._absorber_agua_olivo,
-            Lechuga: self._absorber_agua_lechuga,
-            Zanahoria: self._absorber_agua_zanahoria
+        self._mantenimiento_handlers = {
+            HabitacionSimple: self._mantenimiento_simple,
+            HabitacionDoble: self._mantenimiento_doble,
+            Suite: self._mantenimiento_suite,
+            SuitePresidencial: self._mantenimiento_presidencial
         }
 
         self._mostrar_datos_handlers = {
-            Pino: self._mostrar_datos_pino,
-            Olivo: self._mostrar_datos_olivo,
-            Lechuga: self._mostrar_datos_lechuga,
-            Zanahoria: self._mostrar_datos_zanahoria
+            HabitacionSimple: self._mostrar_datos_simple,
+            HabitacionDoble: self._mostrar_datos_doble,
+            # ... etc
         }
 
-    def absorber_agua(self, cultivo: Cultivo) -> int:
-        tipo = type(cultivo)
-        if tipo not in self._absorber_agua_handlers:
-            raise ValueError(f"Tipo desconocido: {tipo}")
-        return self._absorber_agua_handlers[tipo](cultivo)
+    def realizar_mantenimiento(self, habitacion: Habitacion) -> int:
+        tipo = type(habitacion)
+        if tipo not in self._mantenimiento_handlers:
+            raise ValueError(f"Tipo de habitación desconocido: {tipo}")
+        return self._mantenimiento_handlers[tipo](habitacion)
 
     # Handlers dedicados (NO lambdas)
-    def _absorber_agua_pino(self, cultivo):
-        return self._pino_service.absorver_agua(cultivo)
+    def _mantenimiento_simple(self, habitacion):
+        return self._simple_service.realizar_mantenimiento(habitacion)
 ```
 
 **Ventajas**:
 - Sin `isinstance()` cascades
-- Facil agregar nuevos tipos
+- Facil agregar nuevos tipos de habitacion
 - Mejor rendimiento (O(1) lookup)
 - Mas testeable
 
-**Trazabilidad**: `cultivo_service_registry.py` lineas 48-89
+**Trazabilidad**: `python_hotel/servicios/habitaciones/habitacion_service_registry.py` lineas 48-89
 
 ---
 
@@ -1534,9 +1546,9 @@ class CultivoServiceRegistry:
 
 | Epic | Historias | Completadas | Cobertura |
 |------|-----------|-------------|-----------|
-| Epic 1: Terrenos y Plantaciones | 3 | 3 | 100% |
-| Epic 2: Gestion de Cultivos | 6 | 6 | 100% |
-| Epic 3: Riego Automatizado | 4 | 4 | 100% |
+| Epic 1: gestion hoteles y alas | 3 | 3 | 100% |
+| Epic 2: Gestion de habitaciones | 6 | 6 | 100% |
+| Epic 3: Sistema de limpieza Automatizado | 4 | 4 | 100% |
 | Epic 4: Gestion de Personal | 4 | 4 | 100% |
 | Epic 5: Operaciones de Negocio | 3 | 3 | 100% |
 | Epic 6: Persistencia y Auditoria | 3 | 3 | 100% |
@@ -1545,27 +1557,36 @@ class CultivoServiceRegistry:
 
 ### Patrones de Diseno Cubiertos
 
-- [x] SINGLETON - CultivoServiceRegistry
-- [x] FACTORY METHOD - CultivoFactory
-- [x] OBSERVER - Sensores y eventos
-- [x] STRATEGY - Absorcion de agua
-- [x] REGISTRY - Dispatch polimorfico (bonus)
+- [x] SINGLETON - HabitacionesServiceRegistry
+- [x] FACTORY METHOD - HabitacionFactory
+- [x] OBSERVER - Sensores (ocupacion,limpieza) y controlador
+- [x] STRATEGY - MantenimientoStrategy (estandar,premiun)
+- [x] REGISTRY - Dispatch polimorfico HabitacionServiceResgistry
 
 ### Funcionalidades Completas
 
-- [x] Gestion de 4 tipos de cultivos
-- [x] Sistema de riego automatizado con 3 threads
-- [x] Gestion de trabajadores con apto medico
-- [x] Persistencia con Pickle
-- [x] Operaciones de negocio de alto nivel
-- [x] Manejo de excepciones especificas
-- [x] PEP 8 compliance 100%
-- [x] Type hints con TYPE_CHECKING
-- [x] Constantes centralizadas
-- [x] Codigo limpio sin lambdas
+-[x] Gestión de 4 tipos de habitaciones
+
+[x] Sistema de limpieza automatizado con 3 threads
+
+[x] Gestión de empleados con certificación profesional
+
+[x] Persistencia con Pickle
+
+[x] Operaciones de negocio de alto nivel (check-out, desinfección)
+
+[x] Manejo de excepciones específicas
+
+[x] PEP 8 compliance 100%
+
+[x] Type hints con TYPE_CHECKING
+
+[x] Constantes centralizadas
+
+[x] Código limpio sin lambdas
 
 ---
 
-**Ultima actualizacion**: Octubre 2025
+**Ultima actualizacion**: Noviembre 2025
 **Estado**: COMPLETO
 **Cobertura funcional**: 100%
